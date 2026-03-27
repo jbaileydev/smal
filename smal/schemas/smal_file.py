@@ -1,6 +1,6 @@
-import stat
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
+from typing import ClassVar
 from smal.schemas.smal_state import SMALState
 from smal.schemas.smal_event import SMALEvent
 from smal.schemas.smal_command import SMALCommand
@@ -13,9 +13,9 @@ import yaml
 from pathlib import Path
 
 class SMALFile(IdentifierValidationMixin, SemverValidationMixin, BaseModel):
-    IDENTIFIER_FIELDS = ("machine",)
-    SEMVER_FIELDS = ("version",)
-    SUPPORTED_FILE_EXTENSIONS = {".smal", ".yaml", ".yml"}
+    IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("machine",)
+    SEMVER_FIELDS: ClassVar[tuple[str]] = ("version",)
+    SUPPORTED_FILE_EXTENSIONS: ClassVar[set[str]] = {".smal", ".yaml", ".yml"}
 
     machine: str = Field(..., description="Name of this state machine.")
     version: str = Field(..., description="Semantic version (major.minor.patch) of this state machine.")
@@ -58,7 +58,7 @@ class SMALFile(IdentifierValidationMixin, SemverValidationMixin, BaseModel):
         path = Path(path)
         if not path.suffix or path.suffix not in cls.SUPPORTED_FILE_EXTENSIONS:
             raise ValueError(f"SMAL file must have one of the following extensions: {', '.join(cls.SUPPORTED_FILE_EXTENSIONS)}")
-        yaml_data = path.read_text(path, encoding="utf-8")
+        yaml_data = path.read_text(encoding="utf-8")
         model_data = yaml.safe_load(yaml_data)
         model = cls.model_validate(model_data)
         return model

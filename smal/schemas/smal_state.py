@@ -1,9 +1,10 @@
 from pydantic import BaseModel
 from smal.schemas.utilities import IdentifierValidationMixin
+from typing import ClassVar
 
 
 class SMALState(IdentifierValidationMixin, BaseModel):
-    IDENTIFIER_FIELDS = ("name",)
+    IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("name",)
 
     name: str
     id: int

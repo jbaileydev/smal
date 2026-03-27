@@ -2,7 +2,7 @@
 from __future__ import annotations  # Until Python 3.14
 from pydantic import BaseModel, Field, field_validator, model_validator
 from smal.schemas.utilities import IdentifierValidationMixin
-from typing import Literal
+from typing import Literal, ClassVar
 from typing_extensions import Self
 
 
@@ -34,7 +34,7 @@ def base_type_and_kind(type_str: str) -> tuple[str, str]:
     return type_str, "primitive"
 
 class SMALDebugBitField(IdentifierValidationMixin, BaseModel):
-    IDENTIFIER_FIELDS = ("name",)
+    IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("name",)
 
     name: str
     bit: int
@@ -46,7 +46,7 @@ class SMALDebugBitField(IdentifierValidationMixin, BaseModel):
         return v
 
 class SMALDebugField(IdentifierValidationMixin, BaseModel):
-    IDENTIFIER_FIELDS = ("name",)
+    IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("name",)
 
     name: str = Field(..., description="The name of the debugging field.")
     type: str = Field(..., description="The type of the debugging field's data, e.g. uint8, uint16, enum:state, struct:Foo, etc.")
@@ -63,7 +63,7 @@ class SMALDebugField(IdentifierValidationMixin, BaseModel):
         return v
 
 class SMALNestedDebugStruct(IdentifierValidationMixin, BaseModel):
-    IDENTIFIER_FIELDS = ("name",)
+    IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("name",)
 
     name: str = Field(..., description="The name of the debugging structure.")
     size_bytes: int = Field(..., description="The size of the entire debugging structure in bytes.")

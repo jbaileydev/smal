@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field
 from smal.schemas.utilities import IdentifierValidationMixin
-
+from typing import ClassVar
 
 class SMALError(IdentifierValidationMixin, BaseModel):
-    IDENTIFIER_FIELDS = ("name",)
+    IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("name",)
 
     name: str
     id: int
