@@ -1,7 +1,5 @@
-# 🌐 **SMAL — State Machine Abstraction Language**
-
 <p align="center">
-  <img src="assets/smal_header_.svg" alt="SMAL Logo" width="420">
+  <img src="assets/smal_header.svg" alt="SMAL Logo" width="420">
 </p>
 
 <p align="center">
