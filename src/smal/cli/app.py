@@ -1,15 +1,6 @@
 import typer
 
-from smal.cli.commands import install_graphviz
+from smal.cli.commands.install_graphviz import install_graphviz_app
 
-app = typer.Typer()
-
-
-@app.command()
-def install_graphviz_cmd():
-    """Install or guide installation of Graphviz."""
-    install_graphviz()
-
-
-if __name__ == "__main__":
-    app()
+app = typer.Typer(help="SMAL = State Machine Abstraction Language CLI")
+app.add_typer(install_graphviz_app, name="install-graphviz")
