@@ -10,17 +10,15 @@ from smal.schemas.smal_enum import SMALEnum
 from smal.schemas.smal_error import SMALError
 from smal.schemas.smal_event import SMALEvent
 from smal.schemas.smal_state import SMALState
-
-# from smal.schemas.smal_message import SMALMessage
 from smal.schemas.smal_struct import SMALStruct
 from smal.schemas.smal_transition import SMALTransition
 from smal.schemas.utilities import IdentifierValidationMixin, SemverValidationMixin
+from smal.utilities import constants as SMALConstants
 
 
 class SMALFile(IdentifierValidationMixin, SemverValidationMixin, BaseModel):
     IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("machine",)
     SEMVER_FIELDS: ClassVar[tuple[str]] = ("version",)
-    SUPPORTED_FILE_EXTENSIONS: ClassVar[set[str]] = {".smal", ".yaml", ".yml"}
 
     machine: str = Field(..., description="Name of this state machine.")
     version: str = Field(..., description="Semantic version (major.minor.patch) of this state machine.")
@@ -65,8 +63,8 @@ class SMALFile(IdentifierValidationMixin, SemverValidationMixin, BaseModel):
         indent: int = 2,
     ) -> None:
         path = Path(path)
-        if not path.suffix or path.suffix not in self.SUPPORTED_FILE_EXTENSIONS:
-            raise ValueError(f"SMAL file must have one of the following extensions: {', '.join(self.SUPPORTED_FILE_EXTENSIONS)}")
+        if not SMALConstants.SupportedFileExtensions.is_smal_file(path, check_exists=False):
+            raise ValueError(f"SMAL file must have one of the following extensions: {', '.join(SMALConstants.SupportedFileExtensions.all())}")
         model_data = self.model_dump(exclude_unset=exclude_unset, exclude_defaults=exclude_defaults, exclude_none=exclude_none, exclude_computed_fields=exclude_computed_fields)
         yaml_data = yaml.safe_dump(model_data, sort_keys=sort_keys, indent=indent)
         path.write_text(yaml_data, encoding="utf-8")
@@ -74,8 +72,11 @@ class SMALFile(IdentifierValidationMixin, SemverValidationMixin, BaseModel):
     @classmethod
     def from_file(cls, path: str | Path) -> Self:
         path = Path(path)
-        if not path.suffix or path.suffix not in cls.SUPPORTED_FILE_EXTENSIONS:
-            raise ValueError(f"SMAL file must have one of the following extensions: {', '.join(cls.SUPPORTED_FILE_EXTENSIONS)}")
+        try:
+            if not SMALConstants.SupportedFileExtensions.is_smal_file(path, check_exists=True):
+                raise ValueError(f"SMAL file must have one of the following extensions: {', '.join(SMALConstants.SupportedFileExtensions.all())}")
+        except FileNotFoundError:
+            raise
         yaml_data = path.read_text(encoding="utf-8")
         model_data = yaml.safe_load(yaml_data)
         model = cls.model_validate(model_data)

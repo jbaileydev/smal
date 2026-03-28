@@ -1,13 +1,17 @@
-
 from __future__ import annotations  # Until Python 3.14
+
+from typing import ClassVar, Literal
+
 from pydantic import BaseModel, Field, field_validator, model_validator
-from smal.schemas.utilities import IdentifierValidationMixin, PrimitiveValidationMixin
-from typing import Literal, ClassVar
 from typing_extensions import Self
-from smal.smal_primitive import SMALPrimitive
-from smal.codegen import is_lang_supported, SUPPORTED_CODEGEN_LANGUAGES, get_target_primitive
-from smal.schemas.smal_enum import SMALEnum
+
+from smal.codegen import get_target_primitive
 from smal.schemas.smal_bitfield import SMALBitField
+from smal.schemas.smal_enum import SMALEnum
+from smal.schemas.utilities import IdentifierValidationMixin, PrimitiveValidationMixin
+from smal.smal_primitive import SMALPrimitive
+from smal.utilities import constants as SMALConstants
+
 
 class SMALStructField(IdentifierValidationMixin, PrimitiveValidationMixin, BaseModel):
     IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("name",)
@@ -20,12 +24,12 @@ class SMALStructField(IdentifierValidationMixin, PrimitiveValidationMixin, BaseM
     bitfields: list[SMALBitField] | None = Field(default=None, description="Bit fields associated with this debug field, if this debug field is a bitfield.")
     endianness: Literal["big", "little"] = Field(default="little", description="Endianness of this debug field.")
 
-
     @field_validator("offset_bytes")
     def validate_offset_bytes(cls, v: int | None) -> int | None:
         if v is not None and v < 0:
             raise ValueError("offset_bytes must be >= 0")
         return v
+
 
 class SMALNestedStruct(IdentifierValidationMixin, BaseModel):
     IDENTIFIER_FIELDS: ClassVar[tuple[str]] = ("name",)
@@ -40,6 +44,7 @@ class SMALNestedStruct(IdentifierValidationMixin, BaseModel):
             raise ValueError(f"struct {self.name}: size_bytes must be > 0")
         return self
 
+
 class SMALStruct(BaseModel):
     lang: str = Field(..., description="The language this struct will be defined in, e.g., c, cpp, rust, etc.")
     size_bytes: int = Field(..., description="The size of the entire structure in bytes.")
@@ -49,18 +54,18 @@ class SMALStruct(BaseModel):
 
     @field_validator("lang")
     def validate_lang(cls, v: str) -> str:
-        if not is_lang_supported(v):
-            raise ValueError(f"Language is not supported: '{v}'. Supported languages are: {', '.join(SUPPORTED_CODEGEN_LANGUAGES)}")
+        if not SMALConstants.SupportedCodeLangs.is_supported_lang(v):
+            raise ValueError(f"Language is not supported: '{v}'. Supported languages are: {', '.join(SMALConstants.SupportedCodeLangs.all())}")
         return v
 
     @model_validator(mode="after")
     def validate_layout(self) -> Self:
         if self.size_bytes <= 0:
-            raise ValueError(f"debug.size_bytes must be > 0")
+            raise ValueError("debug.size_bytes must be > 0")
         struct_map: dict[str, SMALNestedStruct] = {s.name: s for s in self.nested_structs}
         enum_map: dict[str, SMALEnum] = {e.name: e for e in self.enums}
         current_offset_bytes = 0
-        ranges: list[tuple[int, int, str]] = [] # (start, end, name)
+        ranges: list[tuple[int, int, str]] = []  # (start, end, name)
         for field in self.layout:
             smal_type = SMALPrimitive.from_str(field.type)
             kind, base = smal_type
@@ -85,7 +90,7 @@ class SMALStruct(BaseModel):
             end = field.offset_bytes + elem_size * length_elements
             if start < 0 or end > self.size_bytes:
                 raise ValueError(f"Field {field.name}: range [{start}, {end}) exceeds debug.size_bytes={self.size_bytes}")
-            for (s, e, other_name) in ranges:
+            for s, e, other_name in ranges:
                 if not (end <= s or start >= e):
                     raise ValueError(f"Field {field.name} overlaps with field {other_name}: [{start}, {end}) vs [{s}, {e})")
             ranges.append((start, end, field.name))
