@@ -82,21 +82,21 @@ class SMALFile(IdentifierValidationMixin, SemverValidationMixin, BaseModel):
         # Validate that all states are properly identified
         state_ids = {s.id for s in self.states}
         if None in state_ids:
-            logging.warning("Machine<%s>: Some states are missing IDs. Auto-assigning IDs based on order of definition.", self.machine)
+            logging.debug("Machine<%s>: Some states are missing IDs. Auto-assigning IDs based on order of definition.", self.machine)
             for s in self.states:
                 s.id = self.states.index(s)
                 logging.debug("Machine<%s>: Auto-assigned ID %s to state '%s'.", self.machine, s.id, s.name)
         # Validate that all events are properly identified
         evt_ids = {e.id for e in self.events}
         if None in evt_ids:
-            logging.warning("Machine<%s>: Some events are missing IDs. Auto-assigning IDs based on order of definition.", self.machine)
+            logging.debug("Machine<%s>: Some events are missing IDs. Auto-assigning IDs based on order of definition.", self.machine)
             for e in self.events:
                 e.id = self.events.index(e)
                 logging.debug("Machine<%s>: Auto-assigned ID %s to event '%s'.", self.machine, e.id, e.name)
         # Validate that all errors are properly identified
         err_ids = {e.id for e in self.errors}
         if None in err_ids:
-            logging.warning("Machine<%s>: Some errors are missing IDs. Auto-assigning IDs based on order of definition.", self.machine)
+            logging.debug("Machine<%s>: Some errors are missing IDs. Auto-assigning IDs based on order of definition.", self.machine)
             for e in self.errors:
                 e.id = self.errors.index(e)
                 logging.debug("Machine<%s>: Auto-assigned ID %s to error '%s'.", self.machine, e.id, e.name)
