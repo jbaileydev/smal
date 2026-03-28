@@ -5,9 +5,9 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/smal.svg)](https://pypi.org/project/smal/)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/smal.svg?label=PyPI%20downloads)](https://pypi.org/project/smal/)
 [![License](https://img.shields.io/badge/license-%20%20GNU%20GPLv3%20-green)](LICENSE)
-[![CI Status](https://github.com/jbaileydev/smal/actions/workflows/ci.yml/badge.svg)](https://github.com/jbaileydev/smal/actions)
-[![Code Styling](https://img.shields.io/badge/style-ruff-000000?logo=ruff&logoColor=white)](https://github.com/jbaileydev/smal)
-[![Code Linting](https://img.shields.io/badge/linting-ruff-red?logo=ruff&logoColor=white)](https://github.com/jbaileydev/smal)
+<!-- [![CI Status](https://github.com/jbaileydev/smal/actions/workflows/ci.yml/badge.svg)](https://github.com/jbaileydev/smal/actions) -->
+[![Code Styling](https://img.shields.io/badge/style-ruff-purple?logo=ruff&logoColor=white)](https://github.com/jbaileydev/smal)
+[![Code Linting](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://github.com/jbaileydev/smal)
 [![Release Version](https://img.shields.io/github/v/release/jbaileydev/smal)](https://github.com/jbaileydev/smal/releases)
 [![Dependabot](https://img.shields.io/badge/dependabot-active-brightgreen?logo=dependabot)](https://github.com/jbaileydev/smal/security/dependabot)
 [![DSL YAML](https://img.shields.io/badge/DSL-YAML-blue)](https://github.com/jbaileydev/smal)
