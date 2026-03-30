@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.8 (2026-03-30)
+
+### Bug Fixes
+
+- Correct commit message
+  ([`095e13f`](https://github.com/smal-lang/smal/commit/095e13f6e6f899f728685de1c090516822be2570))
+
+
 ## v0.1.7 (2026-03-30)
 
 ### Bug Fixes
