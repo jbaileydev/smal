@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.2.1 (2026-03-30)
+
+### Bug Fixes
+
+- Testing new workflow with app ([#21](https://github.com/aetheric-sh/smal/pull/21),
+  [`d843cc2`](https://github.com/aetheric-sh/smal/commit/d843cc22afab4c07c33b447ad9cf559275c73391))
+
+
 ## v0.2.0 (2026-03-30)
 
 ### Features
