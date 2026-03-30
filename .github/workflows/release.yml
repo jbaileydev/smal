@@ -10,10 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      dist_artifacts_name: dist         # artifact name
-      dist_artifacts_dir: dist          # folder where Python packages will live
-      lock_file_artifact: uv.lock
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,9 +25,9 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Build Python distributions
-        run: uv build --out-dir ${{ env.dist_artifacts_dir }}
+        run: uv build -o dist --clear
 
-      - name: Debug | List dist directory
+      - name: DEBUG | List dist directory
         run: ls -lR dist
 
       - name: Detect next version
@@ -44,8 +40,8 @@ jobs:
         if: ${{ steps.version.outputs.released == 'true' }}
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.dist_artifacts_name }}
-          path: ${{ env.dist_artifacts_dir }}/**
+          name: dist
+          path: dist/**
           if-no-files-found: error
           retention-days: 2
 
@@ -53,8 +49,8 @@ jobs:
         if: ${{ steps.version.outputs.released == 'true' }}
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.lock_file_artifact }}
-          path: ${{ env.lock_file_artifact }}
+          name: uv.lock
+          path: uv.lock
           if-no-files-found: error
           retention-days: 2
 
@@ -62,8 +58,8 @@ jobs:
       new-release-detected: ${{ steps.version.outputs.released }}
       new-release-version: ${{ steps.version.outputs.version }}
       new-release-tag: ${{ steps.version.outputs.tag }}
-      distribution-artifacts: ${{ env.dist_artifacts_name }}
-      lock-file-artifact: ${{ env.lock_file_artifact }}
+      distribution-artifacts: dist
+      lock-file-artifact: uv.lock
 
   release:
     runs-on: ubuntu-latest
@@ -90,7 +86,7 @@ jobs:
           name: ${{ needs.build.outputs.distribution-artifacts }}
           path: dist
 
-      - name: DEBUG | list directory
+      - name: DEBUG | List dist directory
         run: ls -lR dist
 
       - name: Download Lock File Artifact
@@ -132,7 +128,7 @@ jobs:
           name: ${{ needs.build.outputs.distribution-artifacts }}
           path: dist
 
-      - name: DEBUG | list directory
+      - name: DEBUG | List dist directory
         run: ls -lR dist
 
       - name: Publish to PyPI
