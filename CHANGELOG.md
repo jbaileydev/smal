@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.11 (2026-03-30)
+
+### Bug Fixes
+
+- Only build new version
+  ([`2c95226`](https://github.com/smal-lang/smal/commit/2c952268b2dfa189d73e2388c5165103ff49fc98))
+
+
 ## v0.1.10 (2026-03-30)
 
 ### Bug Fixes
