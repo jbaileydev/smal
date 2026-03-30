@@ -1,9 +1,35 @@
 # CHANGELOG
 
 
+## v0.1.5 (2026-03-30)
+
+### Bug Fixes
+
+- Another workflow update
+  ([`854afa1`](https://github.com/smal-lang/smal/commit/854afa168fb4a96a3299d3704a62986c47af7a29))
+
+- Bump version
+  ([`38c8506`](https://github.com/smal-lang/smal/commit/38c850661f28e244da9ac73739bb877612e83251))
+
+- Install uv during release
+  ([`8ce49eb`](https://github.com/smal-lang/smal/commit/8ce49eb083b96402d7454e8302bffafdb116c6b5))
+
+- Re-add outputs
+  ([`8dfa8e2`](https://github.com/smal-lang/smal/commit/8dfa8e2c159cea00e5bd53fcd5d721a88d8216e9))
+
+- Update readme
+  ([`6f15046`](https://github.com/smal-lang/smal/commit/6f15046e869af10e0745bc48ba7478b8fe087d2c))
+
+- Update uv build cmd ([#19](https://github.com/smal-lang/smal/pull/19),
+  [`c751e09`](https://github.com/smal-lang/smal/commit/c751e09beb3274dc2e63bf2e239ff4f7ad79aa27))
+
+
 ## v0.1.4 (2026-03-30)
 
 ### Bug Fixes
+
+- Pypi not seeing dist
+  ([`7fc3d78`](https://github.com/smal-lang/smal/commit/7fc3d78b6d18ca5fe7cf5ee1c690e058d838a766))
 
 - Uv build cmd
   ([`a1defdd`](https://github.com/smal-lang/smal/commit/a1defdde438dc755de1412ea9497a29cf486d186))
