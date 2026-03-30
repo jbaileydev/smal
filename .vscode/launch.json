@@ -12,9 +12,9 @@
             "cwd": "${workspaceFolder}/src",
             "args": [
                 "diagram",
-                "${workspaceFolder}/src/examples/example.smal",
+                "${workspaceFolder}/src/examples/example_inlined.smal",
                 "${workspaceFolder}/src/examples",
-                "-f"
+                "-f",
             ],
             "console": "integratedTerminal"
         },
