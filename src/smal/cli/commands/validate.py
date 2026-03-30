@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, TypeAlias
 
-from jinja2 import Environment, meta, nodes, TemplateNotFound
+from jinja2 import Environment, TemplateNotFound, meta, nodes
 from pydantic import BaseModel
 
 
@@ -45,7 +45,7 @@ class SMALValidationResult:
     template_name: str
     issues: list[SMALValidationIssue] = field(default_factory=list)
 
-    def add_issue(self, severity: Severity, message: str, location: str | None = None, code: str | None = None) -> None:
+    def add_issue(self, severity: Severity, message: str, location: tuple[int, int] | None = None, code: str | None = None) -> None:
         self.issues.append(SMALValidationIssue(severity, message, location, code))
 
     @property
@@ -146,7 +146,7 @@ def validate_template_macros(
             result.add_issue(
                 Severity.ERROR,
                 f"Macro template '{template_macro_ref.name}' not found.",
-                f"{template_macro_ref.line}:{template_macro_ref.col}",
+                (template_macro_ref.line, template_macro_ref.col),
                 code="MACRO_TEMPLATE_NOT_FOUND",
             )
     return result
@@ -159,7 +159,6 @@ def validate_template_variables(
     allowed_paths: set[str],
     result: SMALValidationResult | None = None,
 ) -> SMALValidationResult:
-    used_template_variables = extract_template_variables(env, template_source)
     result = result or SMALValidationResult(template_name)
 
     def is_allowed_symbol(symbol: str) -> bool:
@@ -172,16 +171,14 @@ def validate_template_variables(
                 return True
         return False
 
-    for var in sorted(used_template_variables):
-        # Skip special Jinja2 variables
-        if var in {"loop"}:
-            continue
-        if not is_allowed_symbol(var):
+    ast = env.parse(template_source)
+    for template_var_ref in walk_template_variables(ast, template_source):
+        if not is_allowed_symbol(template_var_ref.name):
             result.add_issue(
                 Severity.ERROR,
-                f"Unknown variable '{var}' used in template '{template_name}'",
-                location=f"template variable '{var}'",
-                code="undefined_variable",
+                f"Unknown variable '{template_var_ref.name}' used in template '{template_name}'",
+                location=(template_var_ref.line, template_var_ref.col),
+                code="UNDEFINED_VARIABLE",
             )
     return result
 

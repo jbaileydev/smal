@@ -3,11 +3,13 @@ from pathlib import Path
 
 import typer
 
-from smal.cli.commands.helpers import echo_table
 from smal.cli.commands import generate_code_cmd_builtin, generate_diagram_cmd, install_graphviz_app
 from smal.cli.commands.code import generate_code_cmd_custom
-from smal.cli.commands.validate import validate_template_macros, validate_template_variables
+from smal.cli.commands.helpers import echo_table
+from smal.cli.commands.validate import generate_allowed_variable_paths_from_model, validate_template_macros, validate_template_variables
+from smal.codegen.code_generator import SMALCodeGenerator
 from smal.codegen.smal_templates import TemplateRegistry, is_valid_smal_template
+from smal.schemas.smal_file import SMALFile
 
 app = typer.Typer(help="SMAL = State Machine Abstraction Language CLI")
 app.add_typer(install_graphviz_app, name="install-graphviz")
@@ -32,16 +34,11 @@ def code_cmd(
     ),
     force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing files if they already exist."),
 ) -> None:
-    # Ensure the SMAL file is real
-    if not smal_path.is_file():
-        raise typer.BadParameter(f"SMAL file not found: {smal_path}")
     # Validate output directory existence and writability
     if not out_dir.exists():
         out_dir.mkdir(parents=True, exist_ok=True)
     elif not out_dir.is_dir():
         raise typer.BadParameter(f"Output path exists but is not a directory: {out_dir}")
-    elif not os.access(out_dir, os.W_OK):
-        raise typer.BadParameter(f"Output directory is not writable: {out_dir}")
     # If the user selected a builtin template
     if TemplateRegistry.has_template(template):
         # Generate the code using the built-in template
@@ -91,12 +88,24 @@ def diagram_cmd(
     )
 
 
-@app.command(name="validate", help="")
+@app.command(name="validate", help="Validate a custom Jinja2 template for use with SMAL code generation by checking for undefined variables and missing macro templates.")
 def validate_cmd(
-    template_path: Path = typer.argument(..., exists=True, file_okay=True, dir_okay=False, readable=True, help=""),
+    template_path: Path = typer.Argument(..., exists=True, file_okay=True, dir_okay=False, readable=True, help="Path to the Jinja2 template file."),
 ) -> None:
-    validation_result = validate_template_variables()
-    validation_result = validate_template_macros()
+    generator = SMALCodeGenerator()
+    env, template = generator.load_external_template(template_path)
+    allowed_variable_paths = generate_allowed_variable_paths_from_model(SMALFile)
+    if env.loader is None or template.name is None:
+        raise RuntimeError("Jinja2 Environment loader is not configured.")
+    source, _, _ = env.loader.get_source(env, template.name)
+    validation_result = validate_template_variables(env, source, template.name, allowed_variable_paths)
+    validation_result = validate_template_macros(env, source, template.name, result=validation_result)
+    if validation_result.ok:
+        typer.echo(f"Template '{template_path}' is valid! No issues found.")
+    else:
+        typer.echo(f"Template '{template_path}' has {len(validation_result.issues)} issue(s):")
+        for issue in validation_result.issues:
+            typer.echo(f"- [{issue.severity.value.upper()}] {issue.message} (Location: {issue.location}, Code: {issue.code})")
 
 
 if __name__ == "__main__":

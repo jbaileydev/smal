@@ -24,6 +24,6 @@ def generate_code_cmd_custom(smal_path: Path, custom_template_path: Path, out_di
     smal = SMALFile.from_file(smal_path)
     generator = SMALCodeGenerator()
     with console.status(f"Generating code from {smal_path} using custom template {custom_template_path}", spinner="dots"):
-        ctmpl = generator.load_external_template(custom_template_path)
+        _, ctmpl = generator.load_external_template(custom_template_path)
         out_filepath = out_dir / (out_filename if out_filename else custom_template_path.stem)
         generator.render_to_file(ctmpl, smal, out_filepath, force=force)

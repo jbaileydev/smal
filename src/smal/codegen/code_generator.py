@@ -22,12 +22,12 @@ class SMALCodeGenerator:
         builtin_tmpl = TemplateRegistry.get(template_name)
         return self.env_builtin.get_template(builtin_tmpl.filename), builtin_tmpl
 
-    def load_external_template(self, template_path: str | Path) -> Template:
+    def load_external_template(self, template_path: str | Path) -> tuple[Environment, Template]:
         template_path = Path(template_path)
         if not template_path.is_file():
             raise FileNotFoundError(f"Template file does not exist: {template_path}")
         env_external = Environment(loader=FileSystemLoader(template_path.parent), autoescape=select_autoescape([]), trim_blocks=True, lstrip_blocks=True)
-        return env_external.get_template(template_path.name)
+        return env_external, env_external.get_template(template_path.name)
 
     def render(self, template: Template, smal: SMALFile, **extra_context: Any) -> str:
         # TODO: Implement formatting while the text is in memory here
