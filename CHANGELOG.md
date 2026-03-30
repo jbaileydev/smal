@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.2.2 (2026-03-30)
+
+### Bug Fixes
+
+- New app workflow works with protected branches
+  ([`f65d148`](https://github.com/aetheric-sh/smal/commit/f65d148a1eea8513aedada1649419657ebe11a11))
+
+
 ## v0.2.1 (2026-03-30)
 
 ### Bug Fixes
