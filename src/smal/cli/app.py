@@ -6,6 +6,7 @@ import typer
 from smal.cli.commands.helpers import echo_table
 from smal.cli.commands import generate_code_cmd_builtin, generate_diagram_cmd, install_graphviz_app
 from smal.cli.commands.code import generate_code_cmd_custom
+from smal.cli.commands.validate import validate_template_macros, validate_template_variables
 from smal.codegen.smal_templates import TemplateRegistry, is_valid_smal_template
 
 app = typer.Typer(help="SMAL = State Machine Abstraction Language CLI")
@@ -88,6 +89,14 @@ def diagram_cmd(
         force=force,
         title=title,
     )
+
+
+@app.command(name="validate", help="")
+def validate_cmd(
+    template_path: Path = typer.argument(..., exists=True, file_okay=True, dir_okay=False, readable=True, help=""),
+) -> None:
+    validation_result = validate_template_variables()
+    validation_result = validate_template_macros()
 
 
 if __name__ == "__main__":

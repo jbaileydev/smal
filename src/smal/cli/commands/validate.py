@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, TypeAlias
 
-from jinja2 import Environment, meta, nodes
+from jinja2 import Environment, meta, nodes, TemplateNotFound
 from pydantic import BaseModel
 
 
@@ -129,14 +129,38 @@ def generate_allowed_variable_paths_from_model(model: type[BaseModel]) -> set[st
     return extract_paths_from_model_schema(model_schema)
 
 
-def validate_template_macros(env: Environment, template_source: str, template_name: str, result: SMALValidationResult) -> None:
+def validate_template_macros(
+    env: Environment,
+    template_source: str,
+    template_name: str,
+    result: SMALValidationResult | None = None,
+) -> SMALValidationResult:
     ast = env.parse(template_source)
-    for var_ref in walk_template_variables(ast, template_source):
-        pass
+    result = result or SMALValidationResult(template_name)
+    for template_macro_ref in walk_template_macros(ast, template_source):
+        if not template_macro_ref.name:
+            continue
+        try:
+            env.get_template(template_macro_ref.name)
+        except TemplateNotFound:
+            result.add_issue(
+                Severity.ERROR,
+                f"Macro template '{template_macro_ref.name}' not found.",
+                f"{template_macro_ref.line}:{template_macro_ref.col}",
+                code="MACRO_TEMPLATE_NOT_FOUND",
+            )
+    return result
 
 
-def validate_template_variables(env: Environment, template_source: str, template_name: str, allowed_paths: set[str], result: SMALValidationResult) -> None:
+def validate_template_variables(
+    env: Environment,
+    template_source: str,
+    template_name: str,
+    allowed_paths: set[str],
+    result: SMALValidationResult | None = None,
+) -> SMALValidationResult:
     used_template_variables = extract_template_variables(env, template_source)
+    result = result or SMALValidationResult(template_name)
 
     def is_allowed_symbol(symbol: str) -> bool:
         if symbol in allowed_paths:
@@ -159,6 +183,7 @@ def validate_template_variables(env: Environment, template_source: str, template
                 location=f"template variable '{var}'",
                 code="undefined_variable",
             )
+    return result
 
 
 def walk_template_macros(ast: nodes.Template, template_source: str) -> Iterator[TemplateMacroRef]:
