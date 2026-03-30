@@ -2,15 +2,17 @@ import os
 from pathlib import Path
 
 import typer
+from rich.console import Console
 
 from smal.cli.commands import generate_code_cmd_builtin, generate_diagram_cmd, install_graphviz_app
 from smal.cli.commands.code import generate_code_cmd_custom
 from smal.cli.commands.helpers import echo_table
 from smal.cli.commands.validate import JinjaTemplateValidator
-from smal.codegen.smal_templates import TemplateRegistry, is_valid_smal_template
+from smal.codegen.smal_templates import TemplateRegistry
 
 app = typer.Typer(help="SMAL = State Machine Abstraction Language CLI")
 app.add_typer(install_graphviz_app, name="install-graphviz")
+console = Console()
 
 
 @app.command(name="templates", help="Get a manifest of all provided code generation templates SMAL provides.")
@@ -40,13 +42,14 @@ def code_cmd(
     # If the user selected a builtin template
     if TemplateRegistry.has_template(template):
         # Generate the code using the built-in template
-        generate_code_cmd_builtin(
+        generated_filepath = generate_code_cmd_builtin(
             smal_path=smal_path,
             template_name=template,
             out_dir=out_dir,
             out_filename=out_filename,
             force=force,
         )
+        console.print(f"[green]Code successfully generated from builtin template {template}: {generated_filepath}[/green]")
     # If the user selected a custom template
     else:
         custom_template_path = Path(template)
@@ -56,17 +59,20 @@ def code_cmd(
         if not os.access(custom_template_path, os.R_OK):
             raise typer.BadParameter(f"Custom template file is not readable: {custom_template_path}")
         # Validate that the custom template itself is a valid SMAL template by checking for required variables
-        is_valid_tmpl, invalid_vars = is_valid_smal_template(custom_template_path)
-        if not is_valid_tmpl:
-            raise typer.BadParameter(f"Custom template {custom_template_path} is not a valid SMAL template. Invalid variables referenced: {', '.join(invalid_vars)}.")
+        validator = JinjaTemplateValidator(custom_template_path)
+        res = validator.validate()
+        if not res.ok:
+            res.echo_report()
+            raise typer.BadParameter(f"Custom template {custom_template_path} is not a valid SMAL template. See above report for details.")
         # Generate the custom code
-        generate_code_cmd_custom(
+        generated_filepath = generate_code_cmd_custom(
             smal_path=smal_path,
             custom_template_path=custom_template_path,
             out_dir=out_dir,
             out_filename=out_filename,
             force=force,
         )
+        console.print(f"[green]Code successfully generated from custom template {custom_template_path.name}: {generated_filepath}[/green]")
 
 
 @app.command(name="diagram", help="Generate an SVG state machine diagram from a SMAL file.")

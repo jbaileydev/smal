@@ -6,7 +6,7 @@ from smal.codegen.code_generator import SMALCodeGenerator
 from smal.schemas.smal_file import SMALFile
 
 
-def generate_code_cmd_builtin(smal_path: Path, template_name: str, out_dir: Path, out_filename: str | None, force: bool) -> None:
+def generate_code_cmd_builtin(smal_path: Path, template_name: str, out_dir: Path, out_filename: str | None, force: bool) -> Path:
     console = Console()
     smal = SMALFile.from_file(smal_path)
     generator = SMALCodeGenerator()
@@ -17,9 +17,10 @@ def generate_code_cmd_builtin(smal_path: Path, template_name: str, out_dir: Path
         for ctx_key, compute_fn in smal_tmpl.computed_extra_context.items():
             extra_context[ctx_key] = compute_fn(smal)
         generator.render_to_file(btmpl, smal, out_filepath, force=force, **extra_context)
+        return out_filepath
 
 
-def generate_code_cmd_custom(smal_path: Path, custom_template_path: Path, out_dir: Path, out_filename: str | None, force: bool) -> None:
+def generate_code_cmd_custom(smal_path: Path, custom_template_path: Path, out_dir: Path, out_filename: str | None, force: bool) -> Path:
     console = Console()
     smal = SMALFile.from_file(smal_path)
     generator = SMALCodeGenerator()
@@ -27,3 +28,4 @@ def generate_code_cmd_custom(smal_path: Path, custom_template_path: Path, out_di
         _, ctmpl = generator.load_external_template(custom_template_path)
         out_filepath = out_dir / (out_filename if out_filename else custom_template_path.stem)
         generator.render_to_file(ctmpl, smal, out_filepath, force=force)
+        return out_filepath

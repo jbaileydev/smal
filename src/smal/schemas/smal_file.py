@@ -1,7 +1,7 @@
 import logging
 from collections import Counter
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -35,6 +35,7 @@ class SMALFile(IdentifierValidationMixin, SemverValidationMixin, BaseModel):
     structs: list[SMALStruct] = Field(default_factory=list, description="Structures to define for this state machine, if any.")
     debug: SMALStruct | None = Field(default=None, description="Debugging structure associated with this state machine, if any.")
     description: str | None = Field(default=None, description="Description of the state machine.")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Any arbitrary metadata you want to make available to code generation templates.")
 
     @field_validator("states", mode="before")
     def expand_short_form_states(cls, v: list[dict | str]) -> list[SMALState]:

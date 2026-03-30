@@ -32,3 +32,4 @@ debug:
           name: error
         - bit: 1
           name: reserved
+metadata: {header_guard: EXAMPLE_H}

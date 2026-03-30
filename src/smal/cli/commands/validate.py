@@ -70,7 +70,9 @@ class SMALValidationResult:
         from rich.text import Text
 
         console = Console()
-        console.print(f"[bold underline cyan]Validation Report for: {self.template_name}[/bold underline cyan]\n")
+        console.print(f"[bold underline cyan]Validation Report for: {self.template_name}[/bold underline cyan]")
+        if template_path:
+            console.print(f"Location: {template_path}")
         if not self.issues:
             console.print(f"[green]No issues found! '{self.template_name}' is a valid SMAL template![/green]")
             return
@@ -81,7 +83,6 @@ class SMALValidationResult:
             header.append(f" at {f'{template_path}::' if template_path else ''}{issue.location[0]}:{issue.location[1]}")
             console.print(header)
             console.print(Padding(issue.message, pad=(0, 0, 0, 4)))
-            console.print()  # Blank line between issues
 
 
 class JinjaTemplateValidator:
@@ -204,6 +205,8 @@ class JinjaTemplateValidator:
         def is_allowed_symbol(symbol: str) -> bool:
             if symbol in self.allowed_paths:
                 return True
+            if symbol.startswith("smal.metadata"):
+                return True  # Allow arbitrary metadata from the SMAL file
             prefix_dot = symbol + "."
             prefix_arr = symbol + "[]"
             for p in self.allowed_paths:

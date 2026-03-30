@@ -1,7 +1,7 @@
 {% from "macros/c_smal_banner.j2" import c_smal_banner %}
 {{ c_smal_banner(smal.machine, smal.version) }}
-#ifndef {{ header_guard }}
-#define {{ header_guard }}
+#ifndef {{ smal.metadata.header_guard }}
+#define {{ smal.metadata.header_guard }}
 
 #include <stdint.h>
 
@@ -38,4 +38,4 @@ typedef enum _{{ smal.machine | lower }}_event_t {
 // STRUCTS
 //TBD
 
-#endif // {{ header_guard }}
+#endif // {{ smal.metadata.header_guard }}
