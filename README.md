@@ -4,7 +4,7 @@
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/smal-lang)](https://pypi.org/project/smal-lang/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/smal-lang)](https://pypi.org/project/smal-lang/)
-[![License](https://img.shields.io/badge/license-%20%20GNU%20GPLv3%20-green)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 <!-- [![CI Status](https://github.com/aetheric-sh/smal/actions/workflows/ci.yml/badge.svg)](https://github.com/aetheric-sh/smal/actions) -->
 [![Code Styling](https://img.shields.io/badge/style-ruff-purple?logo=ruff&logoColor=white)](https://github.com/aetheric-sh/smal)
 [![Code Linting](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://github.com/aetheric-sh/smal)
