@@ -45,13 +45,14 @@ def code_cmd(
     # If the user selected a builtin template
     if TemplateRegistry.has_template(template):
         # Generate the code using the built-in template
-        generated_filepath = generate_code_cmd_builtin(
-            smal_path=smal_path,
-            template_name=template,
-            out_dir=out_dir,
-            out_filename=out_filename,
-            force=force,
-        )
+        with console.status(f"Generating code from {smal_path} using built-in template '{template}'", spinner="dots"):
+            generated_filepath = generate_code_cmd_builtin(
+                smal_path=smal_path,
+                template_name=template,
+                out_dir=out_dir,
+                out_filename=out_filename,
+                force=force,
+            )
         console.print(f"[green]Code successfully generated from builtin template {template}: {generated_filepath}[/green]")
     # If the user selected a custom template
     else:
@@ -68,13 +69,14 @@ def code_cmd(
             res.echo_report()
             raise typer.BadParameter(f"Custom template {custom_template_path} is not a valid SMAL template. See above report for details.")
         # Generate the custom code
-        generated_filepath = generate_code_cmd_custom(
-            smal_path=smal_path,
-            custom_template_path=custom_template_path,
-            out_dir=out_dir,
-            out_filename=out_filename,
-            force=force,
-        )
+        with console.status(f"Generating code from {smal_path} using custom template {custom_template_path}", spinner="dots"):
+            generated_filepath = generate_code_cmd_custom(
+                smal_path=smal_path,
+                custom_template_path=custom_template_path,
+                out_dir=out_dir,
+                out_filename=out_filename,
+                force=force,
+            )
         console.print(f"[green]Code successfully generated from custom template {custom_template_path.name}: {generated_filepath}[/green]")
 
 
