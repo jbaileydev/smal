@@ -74,7 +74,7 @@ class SMALValidationResult:
         if template_path:
             console.print(f"Location: {template_path}")
         if not self.issues:
-            console.print(f"[green]No issues found! '{self.template_name}' is a valid SMAL template![/green]")
+            console.print(f"[green]No issues found! [bold cyan]'{self.template_name}'[/bold cyan] is a valid SMAL code generation template![/green]")
             return
         for issue in self.issues:
             header = Text()
@@ -236,16 +236,21 @@ def extract_paths_from_model_schema(
         root_schema = model_schema
     if visited_refs is None:
         visited_refs = set()
+
     paths = set()
+
     # --- $ref resolution with cycle detection ---
     if "$ref" in model_schema:
         ref: str = model_schema["$ref"]
+
         # If we've already expanded this ref, stop recursion
         if ref in visited_refs:
             if prefix:
                 paths.add(prefix)
             return paths
+
         visited_refs.add(ref)
+
         if ref.startswith("#/$defs/"):
             type_name = ref.split("/")[-1]
             defs = root_schema.get("$defs") or root_schema.get("definitions") or {}
@@ -259,34 +264,41 @@ def extract_paths_from_model_schema(
             if prefix:
                 paths.add(prefix)
             return paths
+
     schema_type = model_schema.get("type")
-    # Objects
+
+    # --- Objects ---
     if schema_type == "object":
         props = model_schema.get("properties", {})
         for name, subschema in props.items():
             new_prefix = f"{prefix}.{name}" if prefix else name
             paths |= extract_paths_from_model_schema(subschema, new_prefix, root_schema, visited_refs)
         return paths
-    # Arrays
+
+    # --- Arrays ---
     if schema_type == "array":
         items = model_schema.get("items", {})
         new_prefix = f"{prefix}[]" if prefix else "[]"
-        return extract_paths_from_model_schema(items, new_prefix, root_schema)
-    # anyOf / oneOf
+        return extract_paths_from_model_schema(items, new_prefix, root_schema, visited_refs)
+
+    # --- anyOf / oneOf ---
     if "anyOf" in model_schema:
         for option in model_schema["anyOf"]:
             paths |= extract_paths_from_model_schema(option, prefix, root_schema, visited_refs)
         return paths
+
     if "oneOf" in model_schema:
         for option in model_schema["oneOf"]:
             paths |= extract_paths_from_model_schema(option, prefix, root_schema, visited_refs)
         return paths
-    # Primitives
+
+    # --- Primitives ---
     if schema_type in {"string", "number", "integer", "boolean", "null"}:
         if prefix:
             paths.add(prefix)
         return paths
-    # Fallback
+
+    # --- Fallback ---
     if prefix:
         paths.add(prefix)
     return paths

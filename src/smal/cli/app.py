@@ -45,7 +45,7 @@ def code_cmd(
     # If the user selected a builtin template
     if TemplateRegistry.has_template(template):
         # Generate the code using the built-in template
-        with console.status(f"Generating code from {smal_path} using built-in template '{template}'", spinner="dots"):
+        with console.status(f"Generating code from {smal_path} using built-in template: [bold cyan]{template}[/bold cyan]", spinner="dots"):
             generated_filepath = generate_code_cmd_builtin(
                 smal_path=smal_path,
                 template_name=template,
@@ -53,7 +53,7 @@ def code_cmd(
                 out_filename=out_filename,
                 force=force,
             )
-        console.print(f"[green]Code successfully generated from builtin template {template}: {generated_filepath}[/green]")
+        console.print(f"[green]Code successfully generated from builtin template {template}: [bold cyan]{generated_filepath}[/bold cyan][/green]")
     # If the user selected a custom template
     else:
         custom_template_path = Path(template)
@@ -69,7 +69,7 @@ def code_cmd(
             res.echo_report()
             raise typer.BadParameter(f"Custom template {custom_template_path} is not a valid SMAL template. See above report for details.")
         # Generate the custom code
-        with console.status(f"Generating code from {smal_path} using custom template {custom_template_path}", spinner="dots"):
+        with console.status(f"Generating code from {smal_path} using custom template: [bold cyan]{custom_template_path}[/bold cyan]", spinner="dots"):
             generated_filepath = generate_code_cmd_custom(
                 smal_path=smal_path,
                 custom_template_path=custom_template_path,
@@ -77,7 +77,9 @@ def code_cmd(
                 out_filename=out_filename,
                 force=force,
             )
-        console.print(f"[green]Code successfully generated from custom template {custom_template_path.name}: {generated_filepath}[/green]")
+        console.print(
+            f"[green]Code successfully generated from custom template [bold yellow]{custom_template_path.name}[/bold yellow]: [bold cyan]{generated_filepath}[/bold cyan][/green]"
+        )
 
 
 @app.command(name="diagram", help="Generate an SVG state machine diagram from a SMAL file.")
@@ -90,7 +92,7 @@ def diagram_cmd(
     orientation: Literal["LR", "TB"] = typer.Option("LR", "--orientation", "-r", help="The orientation of the diagram, either LR (Left-Right) or TB (Top-Bottom)"),
 ) -> None:
     if not svg_output_dir.exists():
-        console.print(f"Created previously non-existent output directory for diagram: {svg_output_dir}")
+        console.print(f"Created previously non-existent output directory for diagram: [bold cyan]{svg_output_dir}[/bold cyan]")
         svg_output_dir.mkdir(parents=True, exist_ok=True)
     generate_diagram_cmd(smal_path=smal_path, svg_output_dir=svg_output_dir, open=open, force=force, title=title, orientation=orientation)
 
