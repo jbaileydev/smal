@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v0.3.3 (2026-04-01)
+
+### Bug Fixes
+
+- Allow for multiple incoming/outgoing ephemeral transitions within composite nodes
+  ([#25](https://github.com/aetheric-sh/smal/pull/25),
+  [`bafe57b`](https://github.com/aetheric-sh/smal/commit/bafe57bac25d16fcd411cc552044c2766dcb715e))
+
+
 ## v0.3.2 (2026-04-01)
 
 ### Bug Fixes
