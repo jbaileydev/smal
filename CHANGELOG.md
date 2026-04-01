@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.3.2 (2026-04-01)
+
+### Bug Fixes
+
+- Utilize automatic ephemeral initial states in diagramming
+  ([#24](https://github.com/aetheric-sh/smal/pull/24),
+  [`fae71fa`](https://github.com/aetheric-sh/smal/commit/fae71fa54568ca093d28481a95ed13bb6ec9c67f))
+
+- Adds `corrections` to automatically correct common shorthands/issues in .smal files, similar to
+  `rules` - Automatically creates ephemeral initial state nodes in diagrams to preserve labels on
+  the user-intended initial states.
+
+
 ## v0.3.1 (2026-04-01)
 
 ### Bug Fixes
