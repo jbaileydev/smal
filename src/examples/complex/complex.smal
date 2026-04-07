@@ -1,0 +1,8 @@
+machine: Complex
+version: 1.0.0
+description: A complex example of a SMAL state machine.
+metadata: {}
+constants: {}
+errors: []
+states: []
+transitions: []

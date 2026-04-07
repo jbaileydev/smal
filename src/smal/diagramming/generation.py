@@ -18,17 +18,17 @@ def all_descendant_states(state: State) -> set[str]:
 
 def internal_edges(state: State, smal: SMALFile, added_edges: list[Transition]) -> list[Transition]:
     names = all_descendant_states(state)
-    return [t for t in smal.get_all_transitions() if t.src_state in names and t.tgt_state in names and t.graphable and t not in added_edges]
+    return [t for t in smal.get_all_transitions() if t.src in names and t.tgt in names and t.graphable and t not in added_edges]
 
 
 def external_incoming_edges(state: State, smal: SMALFile, added_edges: list[Transition]) -> list[Transition]:
     names = all_descendant_states(state)
-    return [t for t in smal.get_all_transitions() if t.tgt_state in names and t.src_state not in names and t.graphable and t not in added_edges]
+    return [t for t in smal.get_all_transitions() if t.tgt in names and t.src not in names and t.graphable and t not in added_edges]
 
 
 def external_outgoing_edges(state: State, smal: SMALFile, added_edges: list[Transition]) -> list[Transition]:
     names = all_descendant_states(state)
-    return [t for t in smal.get_all_transitions() if t.src_state in names and t.tgt_state not in names and t.graphable and t not in added_edges]
+    return [t for t in smal.get_all_transitions() if t.src in names and t.tgt not in names and t.graphable and t not in added_edges]
 
 
 def create_edge_label(t: Transition) -> str:
@@ -61,24 +61,24 @@ def build_cluster_tree(smal: SMALFile, dot: Digraph, composite_state: State) -> 
     added_edges = []
     incoming_eph_transitions = smal.get_incoming_ephemeral_transitions(ephemeral_initial_state)
     for iet in incoming_eph_transitions:
-        dot.edge(iet.src_state, iet.tgt_state, create_edge_label(iet))
+        dot.edge(iet.src, iet.tgt, create_edge_label(iet))
         added_edges.append(iet)
     outgoing_eph_transitions = smal.get_outgoing_ephemeral_transitions(ephemeral_initial_state)
     for oet in outgoing_eph_transitions:
-        cluster.edge(oet.src_state, oet.tgt_state, create_edge_label(oet))
+        cluster.edge(oet.src, oet.tgt, create_edge_label(oet))
         added_edges.append(oet)
     # Add all non-initial root substates
     for rss in [ss for ss in composite_state.substates if not ss.substates and ss.type != StateType.INITIAL]:
         cluster.node(rss.name, **rss.type.default_metadata)
     # Internal edges
     for ie in internal_edges(composite_state, smal, added_edges=added_edges):
-        cluster.edge(ie.src_state, ie.tgt_state, label=create_edge_label(ie))
+        cluster.edge(ie.src, ie.tgt, label=create_edge_label(ie))
     # External incoming edges
     for eie in external_incoming_edges(composite_state, smal, added_edges=added_edges):
-        dot.edge(eie.src_state, eie.tgt_state, label=create_edge_label(eie), lhead=cluster_name)
+        dot.edge(eie.src, eie.tgt, label=create_edge_label(eie), lhead=cluster_name)
     # External outgoing edges
     for eoe in external_outgoing_edges(composite_state, smal, added_edges=added_edges):
-        dot.edge(eoe.src_state, eoe.tgt_state, label=create_edge_label(eoe), ltail=cluster_name)
+        dot.edge(eoe.src, eoe.tgt, label=create_edge_label(eoe), ltail=cluster_name)
     # Now recurse over nested substates
     for nss in [ss for ss in composite_state.substates if ss.substates]:
         subtree = build_cluster_tree(smal, cluster, nss)
@@ -134,17 +134,13 @@ def generate_state_machine_svg(
         else:
             dot.node(rs.name, **rs.type.default_metadata)
         # 3. Add all root-to-root edges (root-to-cluster/cluster-to-root will be added later)
-        incoming_root_edges = [
-            t for t in smal.transitions if t.src_state in root_state_names and t.src_state != rs.name and t.tgt_state == rs.name and t not in added_root_edges and t.graphable
-        ]
-        outgoing_root_edges = [
-            t for t in smal.transitions if t.tgt_state in root_state_names and t.tgt_state != rs.name and t.src_state == rs.name and t not in added_root_edges and t.graphable
-        ]
+        incoming_root_edges = [t for t in smal.transitions if t.src in root_state_names and t.src != rs.name and t.tgt == rs.name and t not in added_root_edges and t.graphable]
+        outgoing_root_edges = [t for t in smal.transitions if t.tgt in root_state_names and t.tgt != rs.name and t.src == rs.name and t not in added_root_edges and t.graphable]
         for ire in incoming_root_edges:
-            dot.edge(ire.src_state, ire.tgt_state, create_edge_label(ire))
+            dot.edge(ire.src, ire.tgt, create_edge_label(ire))
             added_root_edges.append(ire)
         for ore in outgoing_root_edges:
-            dot.edge(ore.src_state, ore.tgt_state, create_edge_label(ore))
+            dot.edge(ore.src, ore.tgt, create_edge_label(ore))
             added_root_edges.append(ore)
 
     # 4. For each composite state
