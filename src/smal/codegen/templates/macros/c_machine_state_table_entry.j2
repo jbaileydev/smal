@@ -4,7 +4,7 @@ typedef void (*{{ smal.name | lower }}_action_t)({{ smal.name | lower }}_state_m
 
 /* A state table entry for the {{ smal.name | capitalize }} state machine. */
 #define MAX_ACTIONS_PER_EVENT {{ max_actions }}
-typedef struct _{{ smal.name | lower }}_state_table_entry_t
+typedef struct
 {
     /* The initial state for this table entry. */
     {{ smal.name | lower }}_state_t src;
