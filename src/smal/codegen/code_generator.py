@@ -5,7 +5,7 @@ from __future__ import annotations  # Until Python 3.14
 from pathlib import Path
 from typing import Any
 
-from jinja2 import ChoiceLoader, Environment, FileSystemLoader, PackageLoader, StrictUndefined, Template, meta, select_autoescape
+from jinja2 import ChoiceLoader, Environment, FileSystemLoader, PackageLoader, StrictUndefined, Template, UndefinedError, select_autoescape
 
 from smal.codegen.templates.builtin_templates import SMALTemplate, TemplateRegistry
 from smal.schemas.state_machine import SMALFile  # noqa: TC001
@@ -34,29 +34,6 @@ class SMALCodeGenerator:
             lstrip_blocks=True,
             undefined=StrictUndefined,
         )
-
-    def _detect_unprovided_vars(self, env: Environment, template_name: str, smal: SMALFile, **extra_context: Any) -> set[str]:
-        context = {"smal": smal, **extra_context}
-        provided_vars = set(context.keys())
-        expected_vars = self.get_template_variables(env, template_name)
-        missing_vars = expected_vars - provided_vars
-        return missing_vars
-
-    @staticmethod
-    def get_template_variables(env: Environment, template_name: str) -> set[str]:
-        """Get the variables that a jinja template expects.
-
-        Args:
-            env (Environment): The environment for the template.
-            template_name (str): The name of the template.
-
-        Returns:
-            set[str]: The variables that the given jinja template expects.
-
-        """
-        source = env.loader.get_source(env, template_name)[0]
-        ast = env.parse(source)
-        return meta.find_undeclared_variables(ast)
 
     def load_builtin_template(self, template_name: str) -> tuple[Environment, Template, SMALTemplate]:
         """Load a SMAL-provided built in jinja template.
@@ -101,19 +78,21 @@ class SMALCodeGenerator:
             smal (SMALFile): The SMAL file to render to the template.
             **extra_context (Any): Any extra content provided as kwargs to render in the template.
 
+        Raises:
+            ValueError: If the template cannot be rendered due to missing variables in the context.
+
         Returns:
             str: The rendered template, ready to be written to a file.
 
         """
-        # First, ensure that this template can be rendered
-        missing_vars = self._detect_unprovided_vars(template.environment, template.name, smal, **extra_context)
-        if missing_vars:
-            raise ValueError(
-                f"Unable to render template. The following variables are missing from the context: {', '.join(missing_vars)}."
-                " Consider adding definitions of these variables in the metadata of your SMAL file.",
-            )
         # TODO: Implement formatting while the text is in memory here
-        return template.render(smal=smal, **extra_context)
+        try:
+            return template.render(smal=smal, **extra_context)
+        except UndefinedError as e:
+            raise ValueError(
+                f"Unable to render template due to the following undefined variable error:\n\n{e}\n\n"
+                "Consider adding definitions of these variables in the metadata of your SMAL file.",
+            ) from e
 
     def render_to_file(self, template: Template, smal: SMALFile, out_path: str | Path, force: bool = False, **extra_context: Any) -> None:
         """Render the given template using the given SMAL file, and any provided extra content to the given filepath.
@@ -127,10 +106,14 @@ class SMALCodeGenerator:
 
         Raises:
             FileExistsError: If the file already exists and force is false.
+            ValueError: If the template cannot be rendered due to missing variables in the context.
 
         """
         out_path = Path(out_path)
         if not force and out_path.exists():
             raise FileExistsError(f"File already exists and overwrite is not allowed: {out_path}")
-        code = self.render(template, smal, **extra_context)
+        try:
+            code = self.render(template, smal, **extra_context)
+        except ValueError:  # noqa: TRY203 - Error will automatically re-raise. Keeping for clarity
+            raise
         out_path.write_text(code, encoding="utf-8")

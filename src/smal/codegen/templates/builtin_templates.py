@@ -42,7 +42,7 @@ class TemplateRegistry:
                     description="C header file for the state machine",
                     output_extension=".h",
                     computed_extra_context={
-                        "header_guard": lambda smal: f"{smal.name.rstrip('_H')}_H".upper(),
+                        "header_guard": lambda smal: f"{smal.name.strip().rstrip('_H')}_H".upper(),
                     },
                 ),
             }
