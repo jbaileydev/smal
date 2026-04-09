@@ -207,4 +207,5 @@ marimo/_lsp/
 __marimo__/
 
 .venv/
-src/generated/*
+generated/
+src/generated/

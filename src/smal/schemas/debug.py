@@ -111,12 +111,18 @@ class SMALDebugTransitionPayload(BaseModel):
                     return event.name
             return f"event#{event_id}"
 
+        def resolve_error_name(error_code: int) -> str:
+            for idx, error in enumerate(sm.errors):
+                candidate_id = error.id if error.id is not None else idx
+                if candidate_id == error_code:
+                    return error.name
+            return f"error#{error_code}"
+
         src_name = resolve_state_name(self.src_state)
         tgt_name = resolve_state_name(self.tgt_state)
         evt_name = resolve_event_name(self.evt)
-        # TODO: Resolve error against state machine's error definitions if applicable
-        status_str = "OK" if self.status == 0 else f"ERR({self.status:+d})"
-        return f"{src_name}({self.src_state}) -[{evt_name}({self.evt})]-> {tgt_name}({self.tgt_state}) · {status_str}"
+        error_name = resolve_error_name(self.status) if self.status != 0 else "OK"
+        return f"{src_name}({self.src_state}) -[{evt_name}({self.evt})]-> {tgt_name}({self.tgt_state}) · {error_name}({self.status:+d})"
 
 
 class SMALDebugMessagePayload(BaseModel):
@@ -426,3 +432,6 @@ def _get_payload_type(entry_type: int) -> str:
     if entry_type & (SMALDebugEntryType.DATA_READ | SMALDebugEntryType.DATA_WRITE):
         return "data"
     return "transition"
+
+
+# TODO: Create introspection functions to provide data to the code generator for generating debug boilerplate code
