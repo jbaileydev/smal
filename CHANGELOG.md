@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.4.4 (2026-04-10)
+
+### Bug Fixes
+
+- Do not use rich.console status spinner when invoking external script
+  ([#33](https://github.com/aetheric-sh/smal/pull/33),
+  [`af61988`](https://github.com/aetheric-sh/smal/commit/af619888ffa85cca750126994dba71a488e37cd8))
+
+fix incorrect str interpolation
+
+* done
+
+
 ## v0.4.3 (2026-04-10)
 
 ### Bug Fixes
