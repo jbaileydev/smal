@@ -35,6 +35,24 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "SMAL: code (boilerplate)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "smal.cli.app",
+            "cwd": "${workspaceFolder}/src",
+            "args": [
+                "code",
+                "generate",
+                "${workspaceFolder}/src/examples/${input:exampleChoice}/${input:exampleChoice}.smal",
+                "-t",
+                "smal_debug_h",
+                "-n",
+                "smal_debug.h",
+                "-f",
+            ],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "SMAL: code macros",
             "type": "debugpy",
             "request": "launch",

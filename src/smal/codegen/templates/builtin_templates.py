@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, TypeAlias
 
+from smal.schemas.debug import construct_c_codegen_context
 from smal.schemas.state_machine import SMALFile
 
 SMALTemplateContextComputeFn: TypeAlias = Callable[[SMALFile], Any]
@@ -48,7 +49,7 @@ class TemplateRegistry:
                     lang="c",
                     description="C header file defining SMAL debugging boilerplate code.",
                     output_extension=".h",
-                    extra_context={"header_guard": "SMAL_DEBUG_H"},
+                    computed_extra_context={"smal_dbg_ctx": construct_c_codegen_context},
                 ),
                 "state_machine_h": SMALTemplate(
                     name="state_machine_h",

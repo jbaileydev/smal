@@ -14,10 +14,10 @@ from smal.codegen import MacroRegistry, TemplateRegistry
 from smal.codegen.code_generator import SMALCodeGenerator
 from smal.schemas.state_machine import SMALFile
 
-code_app = typer.Typer(help="Generate code from SMAL files using Jinja2 templates.")
+code_app = typer.Typer(help="Generate code from SMAL files using Jinja2 templates.", no_args_is_help=True)
 
 
-@code_app.command("generate", help="Generate code from a SMAL file using a Jinja2 template.")
+@code_app.command("generate", help="Generate code from a SMAL file using a Jinja2 template.", no_args_is_help=True)
 def generate_cmd(
     smal_path: Path = typer.Argument(..., exists=True, file_okay=True, dir_okay=False, readable=True, help="Path to the input SMAL file."),  # noqa: B008
     template: str = typer.Option(

@@ -1,0 +1,385 @@
+{% from "macros/c_autogen_banner.j2" import c_autogen_banner %}
+{% from "macros/c_enum.j2" import c_enum %}
+{% from "macros/c_struct.j2" import c_struct %}
+{% from "macros/c_union.j2" import c_union %}
+{{ c_autogen_banner() }}
+#ifndef _SMAL_DEBUG_H_
+#define _SMAL_DEBUG_H_
+
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+{% for ced in smal_dbg_ctx.enums %}
+{{ c_enum(ced) }}
+{% endfor %}
+
+{% for csd in smal_dbg_ctx.structs %}
+{{ c_struct(csd) }}
+{% endfor %}
+
+{% for cud in smal_dbg_ctx.unions %}
+{{ c_union(cud) }}
+{% endfor %}
+
+/**
+ * @brief Get the current timestamp in milliseconds.
+ * 
+ * @return uint32_t The current timestamp in milliseconds.
+ */
+uint32_t smal_debug_get_timestamp_ms(void);
+
+
+/**
+ * @brief Make a single transmission of debug data (transport is implementation-dependent).
+ * 
+ * @param data The debug entries to transmit.
+ * @param num_entries The number of entries to transmit.
+ */
+void smal_debug_transmit_data(smal_debug_entry_t *data, uint16_t num_entries);
+
+
+/**
+ * @brief Execute a single iteration of a SMAL debug ring buffer flush.
+ *        This essentially will send out a single, maximally-sized transmission
+ *        with debug entries over the transport of your choice. This method is
+ *        meant to be called multiple times until the ring buffer has been fully flushed,
+ *        which is denoted with a final empty transmission.
+ * 
+ *        Calling this method again following the empty transmission will start the process again.
+ * 
+ * @param flush_params The parameters required to manage the iterative flush.
+ * @param ring Reference to the ring buffer.
+ * @param max_entries_per_transmit The maximum number of entries that can be transmitted over a single transmission.
+ */
+static inline void smal_debug_iterative_buffer_flush(smal_flush_params_t *flush_params, smal_debug_ring_t *ring, uint16_t max_entries_per_transmit)
+{
+    // If we're not actively in the middle of a flush, we should make it so
+    if (!flush_params->active)
+    {
+        flush_params->active = true;
+        flush_params->entries_sent = 0u;
+        flush_params->entry_count = ring->entry_count;
+        flush_params->oldest_idx= ring->oldest_index;
+        flush_params->send_empty_next = false;
+    }
+    // Otherwise
+    // If this is the last packet, deactivate flush and send an empty packet
+    if (flush_params->send_empty_next)
+    {
+        flush_params->send_empty_next = false;
+        flush_params->active = false;
+        smal_debug_transmit_data(NULL, 0);
+        return;
+    }
+    // If this is not the last packet, we need to calculate how big this one is and send it, and advance our variables
+    uint16_t remaining_entries = flush_params->entry_count - flush_params->entries_sent;
+    uint16_t entries_to_send = (uint16_t)MIN(max_entries_per_transmit, remaining_entries);
+    smal_debug_entry_t chunk[max_entries_per_transmit];
+    for (uint16_t i = 0u; i < entries_to_send; i++)
+    {
+        // Calculate the index of the next entry to send, accounting for wrap-around
+        uint16_t idx = (uint16_t)(flush_params->oldest_idx + flush_params->entries_sent + i) % ring->capacity;
+        chunk[i] = ring->entries[idx];
+    }
+    flush_params->entries_sent += entries_to_send;
+    // If we sent the last of the entries, the next packet should be empty
+    if (flush_params->entries_sent >= flush_params->entry_count)
+    {
+        flush_params->send_empty_next = true;
+    }
+    // Finally, send the packet
+    smal_debug_transmit_data(&chunk[0], entries_to_send);
+}
+
+/**
+ * @brief Initialize the SMAL debugging ring buffer.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @param storage Reference to pre-allocated storage for the ring buffer.
+ * @param capacity The maximum number of entries that `storage` can contain.
+ */
+static inline void smal_debug_ring_init(smal_debug_ring_t *ring, smal_debug_entry_t *storage, uint16_t capacity)
+{
+    ring->oldest_index = 0u;
+    ring->write_index = 0u;
+    ring->entry_count = 0u;
+    ring->capacity = capacity;
+    ring->overwrite_count = 0u;
+    ring->entries = storage;
+}
+
+/**
+ * @brief Clear the contents of the SMAL debugging ring buffer.
+ * 
+ * @param ring Reference to the ring buffer.
+ */
+static inline void smal_debug_ring_clear(smal_debug_ring_t *ring)
+{
+    ring->oldest_index = 0u;
+    ring->write_index = 0u;
+    ring->entry_count = 0u;
+    ring->overwrite_count = 0u;
+}
+
+/**
+ * @brief Get whether the SMAL debugging ring buffer is currently empty.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @return true If the ring buffer is currently empty.
+ * @return false If the ring buffer is not currently empty.
+ */
+static inline bool smal_debug_ring_is_empty(const smal_debug_ring_t *ring)
+{
+    return (ring->entry_count == 0u);
+}
+
+/**
+ * @brief Get whether the SMAL debugging ring buffer is currently full.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @return true If the ring buffer is currently full.
+ * @return false If the ring buffer is not currently full.
+ */
+static inline bool smal_debug_ring_is_full(const smal_debug_ring_t *ring)
+{
+    return (ring->entry_count == ring->capacity);
+}
+
+/**
+ * @brief Push an arbitrary entry into the SMAL debugging ring buffer.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @param entry Reference to the entry to push.
+ * @return true If the entry was successfully pushed to the ring buffer.
+ * @return false If the ring buffer is not properly initialized or has zero capacity.
+ */
+static inline bool smal_debug_ring_push(smal_debug_ring_t *ring, const smal_debug_entry_t *entry)
+{
+    if ((ring->entries == NULL) || (ring->capacity == 0u))
+    {
+        return false;
+    }
+
+    ring->entries[ring->write_index] = *entry;
+    ring->write_index = (uint16_t)((ring->write_index + 1u) % ring->capacity);
+
+    if (ring->entry_count < ring->capacity)
+    {
+        ++ring->entry_count;
+    }
+    else
+    {
+        ring->oldest_index = ring->write_index;
+        ++ring->overwrite_count;
+    }
+
+    return true;
+}
+
+/**
+ * @brief Get an entry out of the SMAL debugging ring buffer by offset.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @param offset The offset index into the ring buffer.
+ * @return const smal_debug_entry_t* The entry corresponding to the offset into the ring buffer.
+ */
+static inline const smal_debug_entry_t *smal_debug_ring_get(const smal_debug_ring_t *ring, uint16_t offset)
+{
+    uint16_t oldest_index;
+    uint16_t index;
+
+    if ((offset >= ring->entry_count) || (ring->entries == NULL) || (ring->capacity == 0u))
+    {
+        return NULL;
+    }
+
+    oldest_index = ring->oldest_index;
+    index = (uint16_t)((oldest_index + offset) % ring->capacity);
+    return &ring->entries[index];
+}
+
+/**
+ * @brief Create a state transition debugging entry.
+ * 
+ * @param src_state The source state of the transition.
+ * @param evt The triggering event that caused the transition.
+ * @param tgt_state The target state of the transition.
+ * @param status The current status of the state machine.
+ * @return smal_debug_entry_t The created state transition debugging entry.
+ */
+static inline smal_debug_entry_t smal_debug_create_transition(uint16_t src_state, uint16_t evt, uint16_t tgt_state, int16_t status)
+{
+    smal_debug_entry_t entry;
+
+    entry.entry_type = SMAL_DEBUG_ENTRY_TYPE_STATE_TRANSITION;
+    entry.timestamp_ms = smal_debug_get_timestamp_ms();
+    entry.payload.transition.src_state = src_state;
+    entry.payload.transition.tgt_state = tgt_state;
+    entry.payload.transition.evt = evt;
+    entry.payload.transition.status = status;
+
+    return entry;
+}
+
+/**
+ * @brief Create a message debugging entry.
+ * 
+ * @param entry_type The type of entry, either event or command.
+ * @param identifier The identifier of the message.
+ * @param data_len The length of the message data.
+ * @param value The value of the message data.
+ * @return smal_debug_entry_t The created message debugging entry.
+ */
+static inline smal_debug_entry_t smal_debug_create_msg(uint32_t entry_type, uint16_t identifier, uint16_t data_len, uint32_t value)
+{
+    smal_debug_entry_t entry;
+
+    entry.entry_type = entry_type;
+    entry.timestamp_ms = smal_debug_get_timestamp_ms();
+    entry.payload.message.identifier = identifier;
+    entry.payload.message.data_len = data_len;
+    entry.payload.message.value = value;
+
+    return entry;
+}
+
+/**
+ * @brief Create a data read debugging entry.
+ * 
+ * @param address The address the data was read from.
+ * @param data_len The length of the read data.
+ * @return smal_debug_entry_t The created data read debugging entry.
+ */
+static inline smal_debug_entry_t smal_debug_create_data_read(uint32_t address, uint32_t data_len)
+{
+    smal_debug_entry_t entry;
+
+    entry.entry_type = SMAL_DEBUG_ENTRY_TYPE_DATA_READ;
+    entry.timestamp_ms = smal_debug_get_timestamp_ms();
+    entry.payload.data.address = address;
+    entry.payload.data.data_len = data_len;
+
+    return entry;
+}
+
+/**
+ * @brief Create a data write debugging entry.
+ * 
+ * @param address The address the data was written to.
+ * @param data_len The length of the written data.
+ * @return smal_debug_entry_t The created data write debugging entry.
+ */
+static inline smal_debug_entry_t smal_debug_create_data_write(uint32_t address, uint32_t data_len)
+{
+    smal_debug_entry_t entry;
+
+    entry.entry_type = SMAL_DEBUG_ENTRY_TYPE_DATA_WRITE;
+    entry.timestamp_ms = smal_debug_get_timestamp_ms();
+    entry.payload.data.address = address;
+    entry.payload.data.data_len = data_len;
+
+    return entry;
+}
+
+/**
+ * @brief Create an error debugging entry.
+ * 
+ * @param error_code The error code encountered.
+ * @param detail Any details associated with the error code.
+ * @return smal_debug_entry_t The created error debugging entry.
+ */
+static inline smal_debug_entry_t smal_debug_create_error(int32_t error_code, uint32_t detail)
+{
+    smal_debug_entry_t entry;
+
+    entry.entry_type = SMAL_DEBUG_ENTRY_TYPE_ERROR;
+    entry.timestamp_ms = smal_debug_get_timestamp_ms();
+    entry.payload.error.error_code = error_code;
+    entry.payload.error.detail = detail;
+
+    return entry;
+}
+
+/**
+ * @brief Create and push a state transition debugging entry to the ring buffer.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @param src_state The source state of the transition.
+ * @param evt The triggering event that caused the transition.
+ * @param tgt_state The target state of the transition.
+ * @param status The current status of the state machine.
+ * @return true If the entry was successfully created and pushed to the ring buffer.
+ * @return false If the entry was not successfully created or pushed to the ring buffer.
+ */
+static inline bool smal_debug_log_transition(smal_debug_ring_t *ring, uint16_t src_state, uint16_t evt, uint16_t tgt_state, int16_t status)
+{
+    smal_debug_entry_t entry = smal_debug_create_transition(src_state, evt, tgt_state, status);
+    return smal_debug_ring_push(ring, &entry);
+}
+
+/**
+ * @brief Create and push a message debugging entry to the ring buffer.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @param entry_type The type of entry, either event or command.
+ * @param identifier The identifier of the message.
+ * @param data_len The length of the message data.
+ * @param value The value of the message data.
+ * @return true If the entry was successfully created and pushed to the ring buffer.
+ * @return false If the entry was not successfully created or pushed to the ring buffer.
+ */
+static inline bool smal_debug_log_msg(smal_debug_ring_t *ring, uint32_t entry_type, uint16_t identifier, uint16_t data_len, uint32_t value)
+{
+    smal_debug_entry_t entry = smal_debug_create_msg(entry_type, identifier, data_len, value);
+    return smal_debug_ring_push(ring, &entry);
+}
+
+/**
+ * @brief Create and push a data read debugging entry to the ring buffer.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @param address The address the data was read from.
+ * @param data_len The length of the read data.
+ * @return true If the entry was successfully created and pushed to the ring buffer.
+ * @return false If the entry was not successfully created or pushed to the ring buffer.
+ */
+static inline bool smal_debug_log_data_read(smal_debug_ring_t *ring, uint32_t address, uint32_t data_len)
+{
+    smal_debug_entry_t entry = smal_debug_create_data_read(address, data_len);
+    return smal_debug_ring_push(ring, &entry);
+}
+
+/**
+ * @brief Create and push a data write debugging entry to the ring buffer.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @param address The address the data was written to.
+ * @param data_len The length of the written data.
+ * @return true If the entry was successfully created and pushed to the ring buffer.
+ * @return false If the entry was not successfully created or pushed to the ring buffer.
+ */
+static inline bool smal_debug_log_data_write(smal_debug_ring_t *ring, uint32_t address, uint32_t data_len)
+{
+    smal_debug_entry_t entry = smal_debug_create_data_write(address, data_len);
+    return smal_debug_ring_push(ring, &entry);
+}
+
+/**
+ * @brief Create and push an error debugging entry to the ring buffer.
+ * 
+ * @param ring Reference to the ring buffer.
+ * @param error_code The error code encountered.
+ * @param detail Any details associated with the error code.
+ * @return true If the entry was successfully created and pushed to the ring buffer.
+ * @return false If the entry was not successfully created or pushed to the ring buffer.
+ */
+static inline bool smal_debug_log_error(smal_debug_ring_t *ring, int32_t error_code, uint32_t detail)
+{
+    smal_debug_entry_t entry = smal_debug_create_error(error_code, detail);
+    return smal_debug_ring_push(ring, &entry);
+}
+
+#endif /* _SMAL_DEBUG_H_ */

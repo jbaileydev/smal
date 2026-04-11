@@ -1,0 +1,10 @@
+{% macro c_enum(c_enum_data) %}
+typedef enum
+{
+{% for ename, eval in c_enum_data.values.items() %}
+    {{ ename | upper }} = {{ eval }},
+{% endfor %}
+    /* End of error table. */
+    {{ c_enum_data.name | upper }}_COUNT,
+} {{ c_enum_data.name.rstrip("_t") | lower }}_t;
+{% endmacro %}

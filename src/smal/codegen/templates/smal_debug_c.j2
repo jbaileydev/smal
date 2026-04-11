@@ -1,0 +1,16 @@
+{% from "macros/c_autogen_banner.j2" import c_autogen_banner %}
+{{ c_autogen_banner() }}
+#include <stdint.h>
+#include "smal_debug.h"
+
+
+uint32_t smal_debug_get_timestamp_ms(void)
+{
+    // TODO: Implement me with your application-specific timestamp getter in milliseconds.
+    return 0u;
+}
+
+void smal_debug_transmit_data(smal_debug_entry_t *data, uint16_t num_entries)
+{
+    // TODO: Implement me with your application-specific data transmission mechanism.
+}
