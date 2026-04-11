@@ -35,11 +35,26 @@ class TemplateRegistry:
         """Get the dictionary of templates, initializing it if it has not already been initialized."""
         if cls._templates is None:
             cls._templates = {
-                "c_machine_hdr": SMALTemplate(
-                    name="c_machine_hdr",
-                    filename="c_machine_hdr.j2",
+                "smal_debug_c": SMALTemplate(
+                    name="smal_debug_c",
+                    filename="smal_debug_c.j2",
                     lang="c",
-                    description="C header file for the state machine",
+                    description="C source file defining SMAL debugging boilerplate code.",
+                    output_extension=".c",
+                ),
+                "smal_debug_h": SMALTemplate(
+                    name="smal_debug_h",
+                    filename="smal_debug_h.j2",
+                    lang="c",
+                    description="C header file defining SMAL debugging boilerplate code.",
+                    output_extension=".h",
+                    extra_context={"header_guard": "SMAL_DEBUG_H"},
+                ),
+                "state_machine_h": SMALTemplate(
+                    name="state_machine_h",
+                    filename="state_machine_h.j2",
+                    lang="c",
+                    description="C header file defining standard information for the given SMAL state machine.",
                     output_extension=".h",
                     computed_extra_context={
                         "header_guard": lambda smal: f"{smal.name.strip().rstrip('_H')}_H".upper(),
