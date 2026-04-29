@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.4.6 (2026-04-29)
+
+### Bug Fixes
+
+- Update debug boilerplate header ([#35](https://github.com/aetheric-sh/smal/pull/35),
+  [`a1fd0ec`](https://github.com/aetheric-sh/smal/commit/a1fd0ec40a2fa1acce5b378ddbab9ba8a28b6f32))
+
+- Update debug boilerplate header template ([#35](https://github.com/aetheric-sh/smal/pull/35),
+  [`a1fd0ec`](https://github.com/aetheric-sh/smal/commit/a1fd0ec40a2fa1acce5b378ddbab9ba8a28b6f32))
+
+* update uv lock
+
+
 ## v0.4.5 (2026-04-29)
 
 ### Bug Fixes
