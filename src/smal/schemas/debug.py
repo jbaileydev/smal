@@ -154,21 +154,21 @@ class SMALDebugEntryType(IntFlag):
 
         """
         types = []
-        if entry_type & SMALDebugEntryType.STATE_TRANSITION:
+        if entry_type & SMALDebugEntryType.ENTRY_TYPE_STATE_TRANSITION:
             types.append("TRANSITION")
-        if entry_type & SMALDebugEntryType.EVENT_RX:
+        if entry_type & SMALDebugEntryType.ENTRY_TYPE_EVENT_RX:
             types.append("EVT_RX")
-        if entry_type & SMALDebugEntryType.EVENT_TX:
+        if entry_type & SMALDebugEntryType.ENTRY_TYPE_EVENT_TX:
             types.append("EVT_TX")
-        if entry_type & SMALDebugEntryType.CMD_RX:
+        if entry_type & SMALDebugEntryType.ENTRY_TYPE_CMD_RX:
             types.append("CMD_RX")
-        if entry_type & SMALDebugEntryType.CMD_TX:
+        if entry_type & SMALDebugEntryType.ENTRY_TYPE_CMD_TX:
             types.append("CMD_TX")
-        if entry_type & SMALDebugEntryType.DATA_READ:
+        if entry_type & SMALDebugEntryType.ENTRY_TYPE_DATA_READ:
             types.append("DATA_RD")
-        if entry_type & SMALDebugEntryType.DATA_WRITE:
+        if entry_type & SMALDebugEntryType.ENTRY_TYPE_DATA_WRITE:
             types.append("DATA_WR")
-        if entry_type & SMALDebugEntryType.ERROR:
+        if entry_type & SMALDebugEntryType.ENTRY_TYPE_ERROR:
             types.append("ERROR")
         return ", ".join(types) if types else "NONE"
 
