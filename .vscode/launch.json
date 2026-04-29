@@ -105,6 +105,20 @@
             ],
             "console": "integratedTerminal"
         },
+        {
+            "name": "SMAL: debug gen-boilerplate",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "smal.cli.app",
+            "cwd": "${workspaceFolder}/src",
+            "args": [
+                "debug",
+                "gen-boilerplate",
+                "c",
+                "-f",
+            ],
+            "console": "integratedTerminal"
+        },
     ],
     "inputs": [
         {

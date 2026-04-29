@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, TypeAlias
 
+from smal.schemas.debug import construct_c_codegen_context
 from smal.schemas.state_machine import SMALFile
 
 SMALTemplateContextComputeFn: TypeAlias = Callable[[SMALFile], Any]
@@ -35,6 +36,22 @@ class TemplateRegistry:
         """Get the dictionary of templates, initializing it if it has not already been initialized."""
         if cls._templates is None:
             cls._templates = {
+                "c_dbg_boilerplate_hdr": SMALTemplate(
+                    name="c_dbg_boilerplate_hdr",
+                    filename="c_dbg_boilerplate_hdr.j2",
+                    lang="c",
+                    description="C header file for the state machine debug boilerplate code",
+                    output_extension=".h",
+                    computed_extra_context={"smal_dbg_ctx": construct_c_codegen_context},
+                ),
+                "c_dbg_boilerplate_src": SMALTemplate(
+                    name="c_dbg_boilerplate_src",
+                    filename="c_dbg_boilerplate_src.j2",
+                    lang="c",
+                    description="C source file for the state machine debug boilerplate code",
+                    output_extension=".c",
+                    computed_extra_context={"smal_dbg_ctx": construct_c_codegen_context},
+                ),
                 "c_machine_hdr": SMALTemplate(
                     name="c_machine_hdr",
                     filename="c_machine_hdr.j2",
@@ -75,6 +92,21 @@ class TemplateRegistry:
         if name not in templates:
             raise ValueError(f"Unknown template: {name}")
         return templates[name]
+
+    @classmethod
+    def get_dbg_boilerplate_templates(cls, lang: str) -> list[SMALTemplate]:
+        """Get the debug boilerplate code templates for the given language.
+
+        Args:
+            lang (str): The language to get the debug boilerplate code templates for.
+
+        Returns:
+            list[SMALTemplate]: The list of debug boilerplate code templates for the given language.
+
+        """
+        return {
+            "c": [cls.get("c_dbg_boilerplate_hdr"), cls.get("c_dbg_boilerplate_src")],
+        }.get(lang, [])
 
     @classmethod
     def list_templates(cls) -> list[SMALTemplate]:
