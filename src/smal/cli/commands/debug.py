@@ -230,7 +230,7 @@ def gen_boilerplate_cmd(
         help="Directory where generated boilerplate code will be written (default: ./generated).",
     ),
     filename: str = typer.Option(
-        None,
+        "smal_dbg",
         "--filename",
         "-n",
         help="Optional filename for the generated boilerplate code. If not provided, a default name based on the language will be used.",
@@ -242,7 +242,7 @@ def gen_boilerplate_cmd(
     Args:
         lang (str, optional): The programming language to generate boilerplate code for.
         output_dir (Path, optional): Directory where generated boilerplate code will be written. Defaults to Path("./generated").
-        filename (str, optional): Optional filename for the generated boilerplate code. If not provided, a default name based on the language will be used. Defaults to None.
+        filename (str, optional): Optional filename for the generated boilerplate code. If not provided, a default name based on the language will be used. Defaults to "smal_dbg".
         force (bool, optional): Whether to overwrite existing files if they already exist. Defaults to False.
 
     """
@@ -253,6 +253,7 @@ def gen_boilerplate_cmd(
     elif not output_dir.is_dir():
         raise typer.BadParameter(f"Output path exists but is not a directory: {output_dir}")
     generator = SMALCodeGenerator()
+    smal = SMALFile.blank()
     boilerplate_templates = TemplateRegistry.get_dbg_boilerplate_templates(lang)
     if not boilerplate_templates:
         console.print(f"[red]No debug boilerplate templates found for language: {lang}[/red]")
@@ -263,8 +264,12 @@ def gen_boilerplate_cmd(
         sanitized_fn = Path(filename).stem if filename else None
         fn = f"{sanitized_fn}{tmpl.output_extension}" if sanitized_fn else f"{smal_tmpl.name}{smal_tmpl.output_extension}"
         out_filepath = output_dir / fn
+        extra_context = tmpl.extra_context.copy()
+        for ctx_key, compute_fn in tmpl.computed_extra_context.items():
+            extra_context[ctx_key] = compute_fn(smal)
         try:
-            generator.render_to_file(btmpl, SMALFile.blank(), out_filepath, force=force)
+            generator.render_to_file(btmpl, smal, out_filepath, force=force, **extra_context)
             console.print(f"[green]Successfully generated debug boilerplate code: [bold cyan]{out_filepath}[/bold cyan][/green]")
-        except ValueError:  # noqa: TRY203 - Error will automatically re-raise. Keeping for clarity
+        except ValueError:
+            console.print(f"[red]Failed to render template {tmpl.name}.[/red]")
             raise

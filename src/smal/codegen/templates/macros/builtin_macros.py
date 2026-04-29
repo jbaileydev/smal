@@ -56,6 +56,27 @@ class MacroRegistry:
     def _get_macros(cls) -> dict[str, SMALMacro]:
         if cls._macros is None:
             cls._macros = {
+                "c_enum": SMALMacro(
+                    name="c_enum",
+                    filename="c_enum.j2",
+                    lang="c",
+                    description="Macro that creates a C-style enumeration.",
+                    params=["c_enum_data"],
+                ),
+                "c_struct": SMALMacro(
+                    name="c_struct",
+                    filename="c_struct.j2",
+                    lang="c",
+                    description="Macro that creates a C-style struct.",
+                    params=["c_struct_data"],
+                ),
+                "c_union": SMALMacro(
+                    name="c_union",
+                    filename="c_union.j2",
+                    lang="c",
+                    description="Macro that creates a C-style union.",
+                    params=["c_union_data"],
+                ),
                 "c_autogen_banner_editable": SMALMacro(
                     name="c_autogen_banner_editable",
                     filename="c_autogen_banner_editable.j2",

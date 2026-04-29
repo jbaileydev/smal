@@ -1,4 +1,7 @@
 {% from "macros/c/c_autogen_banner.j2" import c_autogen_banner %}
+{% from "macros/c/c_enum.j2" import c_enum %}
+{% from "macros/c/c_struct.j2" import c_struct %}
+{% from "macros/c/c_union.j2" import c_union %}
 {{ c_autogen_banner() }}
 #ifndef SMAL_DBG_H
 #define SMAL_DBG_H
@@ -11,10 +14,6 @@
 #ifndef SMAL_DBG_MAX_ENTRIES_PER_TRANSMIT
 #define SMAL_DBG_MAX_ENTRIES_PER_TRANSMIT 1u
 #endif /* #ifndef SMAL_DBG_MAX_ENTRIES_PER_TRANSMIT */
-
-#ifndef BIT
-#define BIT(x) (1u << (x))
-#endif /* #ifndef BIT */
 
 #ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -37,127 +36,15 @@ uint32_t smal_dbg_get_timestamp_ms(void);
  */
 void smal_dbg_flush_packet(size_t pkt_len_bytes, const void *pkt, void *user_ctx);
 
-/**
- * @brief Enumeration of debug entry types.
- *
- */
-typedef enum
-{
-    SMAL_DBG_ENTRY_TYPE_NONE = 0u,
-    SMAL_DBG_ENTRY_TYPE_STATE_TRANSITION = BIT(0),
-    SMAL_DBG_ENTRY_TYPE_EVENT_RX = BIT(1),
-    SMAL_DBG_ENTRY_TYPE_EVENT_TX = BIT(2),
-    SMAL_DBG_ENTRY_TYPE_CMD_RX = BIT(3),
-    SMAL_DBG_ENTRY_TYPE_CMD_TX = BIT(4),
-    SMAL_DBG_ENTRY_TYPE_DATA_READ = BIT(5),
-    SMAL_DBG_ENTRY_TYPE_DATA_WRITE = BIT(6),
-    SMAL_DBG_ENTRY_TYPE_ERROR = BIT(7),
-} smal_dbg_entry_type_t;
-
-/**
- * @brief Structure defining a state transition payload, which can be used for state transition entries in the debug log.
- *
- */
-typedef struct
-{
-    uint16_t src_state; // The source state before the transition. The interpretation of this field can depend on the context, e.g. it could be a state ID, a state index, etc.
-    uint16_t tgt_state; // The target state after the transition. The interpretation of this field can depend on the context, e.g. it could be a state ID, a state index, etc.
-    uint16_t evt; // The event that triggered the transition. The interpretation of this field can depend on the context, e.g. it could be an event ID, an event index, etc.
-    int16_t status; // The status of the transition, e.g. success, failure, error code, etc. The interpretation of this field can depend on the context, e.g. it could be a status code, a boolean success/failure indicator, etc.
-} smal_dbg_transition_payload_t;
-
-/**
- * @brief Structure defining a message payload, which can be used for event or command entries in the debug log.
- *
- */
-typedef struct
-{
-    uint16_t identifier; // The identifier of the event or command. The interpretation of this field can depend on the context, e.g. it could be an event ID, a command ID, etc.
-    uint16_t data_len; // The length of the data associated with the event or command, in bytes. This can be used to indicate the size of the payload or parameters, if any.
-    uint32_t value; // A value associated with the event or command. The interpretation of this field can depend on the context, e.g. it could be a parameter value, a status code, etc.
-} smal_dbg_message_payload_t;
-
-/**
- * @brief Structure defining a data read/write payload, which can be used for data read or write entries in the debug log.
- *
- */
-typedef struct
-{
-    uint32_t address; // The address that was read from or written to. The interpretation of this field can depend on the context, e.g. it could be a memory address, a register address, etc.
-    uint32_t data_len; // The length of the data that was read or written, in bytes. This can be used to indicate the size of the operation, e.g. 1 for byte, 2 for half-word, 4 for word, etc.
-} smal_dbg_data_payload_t;
-
-/**
- * @brief Structure defining an error payload, which can be used for error entries in the debug log.
- *
- */
-typedef struct
-{
-    int32_t error_code; // Negative values can indicate different error types or categories, while non-negative values can be used for specific error codes within those categories.
-    uint32_t detail; // Additional detail about the error, which can be used for debugging purposes. The interpretation of this field can depend on the error_code, e.g. it could be an address, a value, a bitmask, etc.
-} smal_dbg_error_payload_t;
-
-/**
- * @brief Union defining the payload of a debug entry, which can be interpreted differently based on the entry type.
- *        The size of this union should be 8 bytes, which is the size of the largest payload type defined
- *        (in this case, the message payload), to ensure that it can hold any of the payload types without overflow.
- *        The raw_words field can be used for raw access to the payload as two 32-bit words if needed, but it should
- *        not be used to store data directly since it may not be portable across different architectures or compilers
- *        due to potential differences in endianness and padding.
- *
- */
-typedef union
-{
-    smal_dbg_transition_payload_t transition; // Payload for state transition entries
-    smal_dbg_message_payload_t message; // Payload for event/command entries
-    smal_dbg_data_payload_t data; // Payload for data read/write entries
-    smal_dbg_error_payload_t error; // Payload for error entries
-    // NOTE: Any other types of payloads can be added here as needed, as long as the total size does not exceed 8 bytes.
-    uint32_t raw_words[2]; // For raw access to the payload as two 32-bit words, if needed.
-} smal_dbg_payload_t; // Total size: 8 bytes (the largest of the payload types, or the raw_words array)
-
-/**
- * @brief Structure defining a SMAL debug entry, which represents a single log entry in the debug ring buffer.
- *
- */
-typedef struct
-{
-    uint32_t entry_type; // Bitmask indicating the type of the entry, e.g. state transition, event, command, data read/write, error, etc. 4 bytes
-    uint32_t timestamp_ms; // Timestamp in milliseconds when the entry was logged. 4 bytes
-    smal_dbg_payload_t
-    payload; // The payload of the entry, which can be interpreted differently based on the entry type. 8 bytes
-} smal_dbg_entry_t;  // Total size: 16 bytes
-
-/**
- * @brief Structure defining the SMAL debugging ring buffer, which holds debug entries along with indices and counters to manage the buffer state.
- *
- */
-typedef struct
-{
-    uint16_t oldest_index; // The read head index, i.e. the index of the oldest entry in the ring. 2 bytes
-    uint16_t write_index; // The write head index, i.e. the index where the next entry will be written. 2 bytes
-    uint16_t entry_count; // The number of valid entries currently in the ring. 2 bytes
-    uint16_t capacity; // The maximum number of entries the ring can hold. 2 bytes
-    uint16_t overwrite_count; // The number of times entries have been overwritten. 2 bytes
-    smal_dbg_entry_t *entries; // Pointer to the array of entries. 16 bytes each
-} smal_dbg_ring_t; // Total size: 24 bytes + (capacity * 16 bytes)
-
-/**
- * @brief Structure defining the status of an ongoing flush cycle of the SMAL debug ring buffer,
- *        which is used to manage the state and progress of flushing entries from the ring buffer
- *        in batches. This structure should be initialized before starting a flush cycle and will
- *        be updated by the smal_dbg_flush function as it sends packets of entries until the flush
- *        cycle is complete.
- *
- */
-typedef struct
-{
-    uint16_t num_entries_sent; // The number of entries that have been sent so far in the current flush cycle. 2 bytes
-    uint16_t entry_count; // The total number of entries that need to be sent in the current flush cycle, i.e. the number of entries that were in the ring at the start of the flush. 2 bytes
-    uint16_t oldest_idx; // The index of the oldest entry in the ring at the start of the flush cycle. 2 bytes
-    bool active; // Indicates whether a flush cycle is currently active. 1 byte
-    bool entry_transmit_complete; // Indicates whether the entry transmission for the current flush cycle is complete. 1 byte
-} smal_dbg_flush_status_t; // Total size: 8 bytes
+{% for kind, data in smal_dbg_ctx.all_data %}
+{% if kind == "enum" %}
+{{ c_enum(data) }}
+{% elif kind == "struct" %}
+{{ c_struct(data) }}
+{% elif kind == "union" %}
+{{ c_union(data) }}
+{% endif %}
+{% endfor %}
 
 /**
  * @brief Initialize the flush status structure to its default values. This should be called before starting a new flush cycle.
